@@ -66,6 +66,55 @@ struct Vec3
 };
 
 //
+//	SCENE
+//
+
+struct Ray
+{
+	Vec3 origin, direction;
+	
+	Ray() = default;
+	Ray(const Vec3& origin, const Vec3& direction)
+		:origin(origin), direction(direction)
+	{}
+};
+
+enum MaterialType
+{
+	DIFFUSE,
+	MIRROR,
+	REFLECT
+};
+
+struct Plane
+{
+	Vec3 position, normal, albedo;
+	MaterialType type;
+	
+	Plane(const Vec3& position, const Vec3& normal, const Vec3& albedo, const MaterialType& type)
+		:position(position), normal(normal), albedo(albedo), type(type)
+	{}
+	
+	bool inline
+	intersect(Ray& ray, Vec3& output_direction, float& output_depth)
+	{
+		float PdotN = position.dot(normal);
+		float OdotN = ray.origin.dot(normal);
+		float DdotN = ray.direction.dot(normal);
+		
+		if(fabs(DdotN) < 1e-5f) return false;
+		
+		float t = (PdotN - OdotN) / DdotN;
+		if(t < 0)return false;
+		
+		output_direction = ray.origin + ray.direction*t;
+		output_depth = t;
+		
+		return true;
+	}
+};
+
+//
 //	RENDERING
 //
 Vec3
