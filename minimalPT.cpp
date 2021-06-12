@@ -65,6 +65,16 @@ struct Vec3
 	
 };
 
+//
+//	RENDERING
+//
+Vec3
+estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
+{
+	float r = (x+y)%256;
+	return Vec3(r,r,r);
+}
+
 int main(int argc, char* argv[])
 {
 	const uint32_t width = 512, height = 512;
@@ -75,9 +85,10 @@ int main(int argc, char* argv[])
 	{
 		for(uint32_t y = 0; y < height; ++y)
 		{
-			output[3*(y * width + x) + 0] = (x+y)%256;
-			output[3*(y * width + x) + 1] = (x+y)%256;
-			output[3*(y * width + x) + 2] = (x+y)%256;
+			Vec3 radiance = estimateRadiance(x,y,width,height);
+			output[3*(y * width + x) + 0] = radiance.x%256;
+			output[3*(y * width + x) + 1] = radiance.y%256;
+			output[3*(y * width + x) + 2] = radiance.z%256;
 		}
 	}
 	
