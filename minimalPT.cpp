@@ -204,6 +204,30 @@ rnd()
 	return ((float)rand())/((float)(RAND_MAX));
 }
 
+Vec3 sampleBSDF(Vec3& N)
+{
+	float xi_1 = rnd();
+	float xi_2 = rnd();
+	
+	float r = sqrtf(xi_1);
+	float phi = 2.0f * PI * xi_2;
+	
+	float x = r*cos(phi);
+	float y = r*sin(phi);
+	float z = sqrtf(fmaxf(0.0f, 1.0f - x * x - y * y));
+	
+	float sz = (N.z >= 0) ? 1 : -1;
+	float a = 1.0f / (sz + N.z);
+	float ya = N.y * a;
+	float b = N.x * ya;
+	float c = N.x * sz;
+	
+	Vec3 localX(c * N.x * a - 1.0f, sz * b, c);
+	Vec3 localY(b, N.y * ya - sz, N.y);
+	
+	return localX * x + localY * y + N * z;
+}
+
 LocalGeometry inline 
 computeSceneIntersection(Ray& ray)
 {
@@ -287,7 +311,7 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 5;
+	const uint32_t n_samples = 1;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
