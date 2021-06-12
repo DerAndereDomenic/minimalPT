@@ -177,11 +177,11 @@ struct Sphere
 #define NUM_PLANES 5
 Plane planes[NUM_PLANES] = 
 {
-	Plane(Vec3(0,-1,0), Vec3(0,1,0), Vec3(1,1,1), DIFFUSE),
-	Plane(Vec3(0,1,0), Vec3(0,-1,0), Vec3(1,1,1), DIFFUSE),
-	Plane(Vec3(-1,0,0), Vec3(1,0,0), Vec3(0,1,0), DIFFUSE),
-	Plane(Vec3(1,0,0), Vec3(-1,0,0), Vec3(1,0,0), DIFFUSE),
-	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(1,1,1), DIFFUSE)
+	Plane(Vec3(0,-1,0), Vec3(0,1,0), Vec3(0.75,0.75,0.75), DIFFUSE),
+	Plane(Vec3(0,1,0), Vec3(0,-1,0), Vec3(0.75,0.75,0.75), DIFFUSE),
+	Plane(Vec3(-1,0,0), Vec3(1,0,0), Vec3(0.25,0.25,0.75), DIFFUSE),
+	Plane(Vec3(1,0,0), Vec3(-1,0,0), Vec3(0.75,0.25,0.25), DIFFUSE),
+	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(0.75,0.75,0.75), DIFFUSE)
 };
 
 #define NUM_SPHERES 2
