@@ -341,9 +341,12 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 64;
+	const uint32_t n_samples = 128;
 	
 	uint8_t* output = new uint8_t[width*height*3];
+	
+	uint32_t done = 0;
+	uint32_t total = width * height * n_samples;
 	
 	for(uint32_t x = 0; x < width; ++x)
 	{
@@ -353,7 +356,11 @@ int main(int argc, char* argv[])
 			for(uint32_t i = 0; i < n_samples; ++i)
 			{
 				radiance = radiance + estimateRadiance(x,width - y - 1,width,height) / n_samples;
+				++done;
 			}
+			
+			printf("\rProgress: %f %%", 100.0f * static_cast<float>(done)/static_cast<float>(total));
+			fflush(stdout);
 			
 			float mapped_x = powf(1.0f - expf(-radiance.x), 1.0f/2.2f);
 			float mapped_y = powf(1.0f - expf(-radiance.y), 1.0f/2.2f);
@@ -376,6 +383,7 @@ int main(int argc, char* argv[])
 	
 	out_image.close();
 	
+	printf("\n");
 	delete[] output;
 	return 0;
 }
