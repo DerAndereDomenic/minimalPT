@@ -4,7 +4,7 @@
 //		g++ -o minimalPT minimalPT.cpp
 
 #include <iostream>
-#define _USE_MATH_DEFINES
+#define PI 3.1415926535f
 #include <cmath>
 #include <fstream>
 
@@ -50,6 +50,12 @@ struct Vec3
 	operator*(const float& l)
 	{
 		return Vec3(x*l, y*l, z*l);
+	}
+	
+	Vec3 inline
+	operator/(const float& l)
+	{
+		return Vec3(x/l, y/l, z/l);
 	}
 	
 	float inline
@@ -171,7 +177,6 @@ computeSceneIntersection(Ray& ray)
 Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
-	Vec3 radiance(0,0,0);
 	Ray ray;
 	
 	ray.origin = Vec3(0,0,0);
@@ -183,23 +188,34 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 	//Compute intersection
 	LocalGeometry geom = computeSceneIntersection(ray);
 	
-	return geom.albedo;
+	Vec3 radiance(0,0,0);
+	if(geom.depth != INFINITY)
+	{
+		Vec3 light_direction = light_position - geom.P;
+		float light_dist = light_direction.norm();
+		Vec3 light_radiance = light_intensity / (light_dist * light_dist);
+		light_direction = light_direction / light_dist;
+		
+		radiance = geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction));
+	}
+	
+	return radiance;
 }
 
 int main(int argc, char* argv[])
 {
 	const uint32_t width = 512, height = 512;
 	
-	char* output = new char[width*height*3];
+	uint8_t* output = new uint8_t[width*height*3];
 	
 	for(uint32_t x = 0; x < width; ++x)
 	{
 		for(uint32_t y = 0; y < height; ++y)
 		{
-			Vec3 radiance = estimateRadiance(x,y,width,height);
-			output[3*(y * width + x) + 0] = static_cast<char>(fminf(radiance.y, 1.0f)*255); //G
-			output[3*(y * width + x) + 1] = static_cast<char>(fminf(radiance.z, 1.0f)*255); //B
-			output[3*(y * width + x) + 2] = static_cast<char>(fminf(radiance.x, 1.0f)*255); //R
+			Vec3 radiance = estimateRadiance(x,width - y - 1,width,height);
+			output[3*(y * width + x) + 0] = static_cast<uint8_t>(fminf(radiance.y, 1.0f)*255.0f); //G
+			output[3*(y * width + x) + 1] = static_cast<uint8_t>(fminf(radiance.z, 1.0f)*255.0f); //B
+			output[3*(y * width + x) + 2] = static_cast<uint8_t>(fminf(radiance.x, 1.0f)*255.0f); //R
 		}
 	}
 	
@@ -211,7 +227,7 @@ int main(int argc, char* argv[])
 	<< height << "\n"
 	<< 255 << "\n";
 	
-	out_image.write(output, width * height * 3);
+	out_image.write((char*)output, width * height * 3);
 	
 	out_image.close();
 	
