@@ -213,14 +213,14 @@ int main(int argc, char* argv[])
 		for(uint32_t y = 0; y < height; ++y)
 		{
 			Vec3 radiance = estimateRadiance(x,width - y - 1,width,height);
-			output[3*(y * width + x) + 0] = static_cast<uint8_t>(fminf(radiance.y, 1.0f)*255.0f); //G
-			output[3*(y * width + x) + 1] = static_cast<uint8_t>(fminf(radiance.z, 1.0f)*255.0f); //B
-			output[3*(y * width + x) + 2] = static_cast<uint8_t>(fminf(radiance.x, 1.0f)*255.0f); //R
+			output[3*(y * width + x) + 0] = static_cast<uint8_t>(fminf(radiance.x, 1.0f)*255.0f); //R
+			output[3*(y * width + x) + 1] = static_cast<uint8_t>(fminf(radiance.y, 1.0f)*255.0f); //G
+			output[3*(y * width + x) + 2] = static_cast<uint8_t>(fminf(radiance.z, 1.0f)*255.0f); //B
 		}
 	}
 	
 	std::ofstream out_image;
-	out_image.open("output.ppm");
+	out_image.open("output.ppm", std::ios::binary);
 	
 	out_image << "P6" << "\n"
 	<< width << " "
