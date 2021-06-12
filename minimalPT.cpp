@@ -321,6 +321,17 @@ computeSceneIntersection(Ray& ray)
 }
 
 Vec3
+brdf(LocalGeometry& geom)
+{
+	switch(geom.type)
+	{
+		case DIFFUSE: return geom.albedo/PI;
+		case MIRROR: return Vec3(1,1,1);
+		case REFLECT: return Vec3(1,1,1);
+	}
+}
+
+Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
 	Ray ray;
@@ -356,13 +367,14 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			if(shadow_geom.depth < light_dist - 0.01f)
 				visibility = 0.0f;
 			
-			radiance = radiance + ray_weight * geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
+			if(geom.type == DIFFUSE)
+				radiance = radiance + ray_weight * brdf(geom) * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 			
 			//Indirect illumination
 			Vec3 sample_direction = sampleBSDF(ray.direction, geom.N, geom.type).normalize();
 			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
-			ray_weight = ray_weight * geom.albedo / PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
+			ray_weight = ray_weight * brdf(geom) * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
 			
 			ray.origin = geom.P + sample_direction * 0.01f;
 			ray.direction = sample_direction;
