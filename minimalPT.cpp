@@ -117,7 +117,8 @@ struct Plane
 //
 //	SCENE
 //
-Plane planes[5] = 
+#define NUM_PLANES 5
+Plane planes[NUM_PLANES] = 
 {
 	Plane(Vec3(0,-1,0), Vec3(0,1,0), Vec3(1,1,1), DIFFUSE),
 	Plane(Vec3(0,1,0), Vec3(0,-1,0), Vec3(1,1,1), DIFFUSE),
@@ -132,8 +133,30 @@ Plane planes[5] =
 Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
-	float r = (x+y)%256;
-	return Vec3(r,r,r);
+	Vec3 radiance(0,0,0);
+	Ray ray;
+	
+	ray.origin = Vec3(0,0,0);
+	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(y) - 0.5f,
+						 2.0f*static_cast<float>(x)/static_cast<float>(height) -0.5f,
+						 1);
+						 
+	float nearest_depth = INFINITY;
+	Vec3 nearest_intersection;
+	
+	for(uint32_t i = 0; i < NUM_PLANES; ++i)
+	{
+		float depth;
+		Vec3 intersection;
+		if(planes[i].intersect(ray, intersection, depth))
+		{
+			nearest_depth = depth;
+			nearest_intersection = intersection;
+			radiance = planes[i].albedo;
+		}
+	}
+	
+	return radiance;
 }
 
 int main(int argc, char* argv[])
