@@ -99,7 +99,7 @@ enum MaterialType
 {
 	DIFFUSE,
 	MIRROR,
-	REFLECT
+	GLASS
 };
 
 struct Plane
@@ -188,7 +188,7 @@ Plane planes[NUM_PLANES] =
 Sphere spheres[NUM_SPHERES] = 
 {
 	Sphere(Vec3(-0.6f,-0.7f,2.6f), 0.3f, Vec3(1,1,1), MIRROR),
-	Sphere(Vec3(0.6f,-0.7f,1.7f), 0.3f, Vec3(1,1,1), REFLECT)
+	Sphere(Vec3(0.6f,-0.7f,1.7f), 0.3f, Vec3(1,1,1), GLASS)
 };
 
 //Light
@@ -248,7 +248,7 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 			return (N*inc_dir.dot(N)*2.0f - inc_dir).normalize();
 		}
 		break;
-		case REFLECT:
+		case GLASS:
 		{
 			float NdotV = inc_dir.dot(N);
 			bool outside = NdotV > 0.0f;
@@ -256,18 +256,24 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 			Vec3 normal = outside ? N : -N;
 			float F0 = outside ? (1.0f - eta) / (1.0f + eta) : (-1.0f + eta) / (1.0f + eta);
 			F0 *= F0;
-			float p_reflect = F0 + (1.0f - F0) * powf(1.0f - NdotV, 5.0f);
+			float p_reflect = F0 + (1.0f - F0) * powf(1.0f - inc_dir.dot(normal), 5.0f);
 			float xi = rnd();
 			Vec3 refraction_dir;
 			float k = 1.0f - eta*eta*(1.0f - NdotV*NdotV);
-			if(k < 0) //Total internal reflection
+			if(k < 0) //Total internal Reflection
 			{
 				return Vec3(0,0,0);
 			}
 			else
 			{
-				return -(inc_dir - normal*(-eta * NdotV + sqrtf(k)))*eta;
+				refraction_dir = -inc_dir*eta - normal*(-eta * inc_dir.dot(normal) + sqrtf(k));
 			}
+			
+			if(xi <= p_reflect)
+			{
+				return (normal*inc_dir.dot(normal)*2.0f - inc_dir);
+			}
+			return refraction_dir;
 		}
 		break;
 	}
@@ -289,24 +295,13 @@ BSDFprob(Vec3& direction, Vec3& normal, const MaterialType& type)
 			return 1.0f;
 		}
 		break;
-		case REFLECT:
+		case GLASS:
 		{
-			
+			return 1.0f;
 		}
 		break;
 	}
 	
-}
-
-Vec3
-brdf(Vec3& inc_dir, LocalGeometry& geom)
-{
-	switch(geom.type)
-	{
-		case DIFFUSE: return geom.albedo/PI;
-		case MIRROR: return Vec3(1,1,1)/inc_dir.dot(geom.N);
-		case REFLECT: return Vec3(1,1,1);
-	}
 }
 
 LocalGeometry inline 
@@ -388,13 +383,15 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 				visibility = 0.0f;
 			
 			if(geom.type == DIFFUSE)
-				radiance = radiance + ray_weight * brdf(inc_dir, geom) * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
+				radiance = radiance + ray_weight * geom.albedo/PI * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 			
 			//Indirect illumination
 			Vec3 sample_direction = sampleBSDF(inc_dir, geom.N, geom.type).normalize();
+			if(sample_direction.norm() == 0)break;
 			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
-			ray_weight = ray_weight * brdf(inc_dir, geom) * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
+			if(geom.type == DIFFUSE)
+				ray_weight = ray_weight * geom.albedo/PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
 			
 			ray.origin = geom.P + sample_direction * 0.01f;
 			ray.direction = sample_direction;
@@ -414,7 +411,7 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 1;
+	const uint32_t n_samples = 10;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
