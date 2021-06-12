@@ -186,8 +186,8 @@ Plane planes[NUM_PLANES] =
 #define NUM_SPHERES 2
 Sphere spheres[NUM_SPHERES] = 
 {
-	Sphere(Vec3(-0.6f,-0.7f,2.6f), 0.3f, Vec3(1,1,1), DIFFUSE),
-	Sphere(Vec3(0.6f,-0.7f,1.7f), 0.3f, Vec3(1,1,1), DIFFUSE)
+	Sphere(Vec3(-0.6f,-0.7f,2.6f), 0.3f, Vec3(1,1,1), MIRROR),
+	Sphere(Vec3(0.6f,-0.7f,1.7f), 0.3f, Vec3(1,1,1), REFLECT)
 };
 
 //Light
@@ -213,7 +213,7 @@ rnd()
 }
 
 Vec3 inline
-sampleBSDF(Vec3& N)
+sampleBSDF(Vec3& incoming_dir, Vec3& N, const MaterialType& type)
 {
 	float xi_1 = rnd();
 	float xi_2 = rnd();
@@ -238,7 +238,7 @@ sampleBSDF(Vec3& N)
 }
 
 float inline 
-BSDFprob(Vec3& direction, Vec3& normal)
+BSDFprob(Vec3& direction, Vec3& normal, const MaterialType& type)
 {
 	return fmaxf(1e-5f, direction.dot(normal)/PI);
 }
@@ -323,8 +323,8 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			radiance = radiance + ray_weight * geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 			
 			//Indirect illumination
-			Vec3 sample_direction = sampleBSDF(geom.N).normalize();
-			float p = BSDFprob(sample_direction, geom.N);
+			Vec3 sample_direction = sampleBSDF(ray.direction, geom.N, geom.type).normalize();
+			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
 			ray_weight = ray_weight * geom.albedo / PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
 			
@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 32;
+	const uint32_t n_samples = 1;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
