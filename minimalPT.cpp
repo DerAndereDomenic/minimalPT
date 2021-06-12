@@ -96,7 +96,7 @@ struct Plane
 	{}
 	
 	bool inline
-	intersect(Ray& ray, Vec3& output_direction, float& output_depth)
+	intersect(Ray& ray, Vec3& output_intersection, float& output_depth)
 	{
 		float PdotN = position.dot(normal);
 		float OdotN = ray.origin.dot(normal);
@@ -107,7 +107,7 @@ struct Plane
 		float t = (PdotN - OdotN) / DdotN;
 		if(t < 0)return false;
 		
-		output_direction = ray.origin + ray.direction*t;
+		output_intersection = ray.origin + ray.direction*t;
 		output_depth = t;
 		
 		return true;
@@ -123,7 +123,7 @@ Plane planes[NUM_PLANES] =
 	Plane(Vec3(0,-1,0), Vec3(0,1,0), Vec3(1,1,1), DIFFUSE),
 	Plane(Vec3(0,1,0), Vec3(0,-1,0), Vec3(1,1,1), DIFFUSE),
 	Plane(Vec3(-1,0,0), Vec3(1,0,0), Vec3(0,1,0), DIFFUSE),
-	Plane(Vec3(1,0,0), Vec3(1,0,0), Vec3(1,0,0), DIFFUSE),
+	Plane(Vec3(1,0,0), Vec3(-1,0,0), Vec3(1,0,0), DIFFUSE),
 	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(1,1,1), DIFFUSE)
 };
 
@@ -137,9 +137,10 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 	Ray ray;
 	
 	ray.origin = Vec3(0,0,0);
-	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(y) - 0.5f,
-						 2.0f*static_cast<float>(x)/static_cast<float>(height) -0.5f,
+	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(width) - 1.0f,
+						 2.0f*static_cast<float>(y)/static_cast<float>(height) - 1.0f,
 						 1);
+	ray.direction = ray.direction * (1.0f/ray.direction.norm());
 						 
 	float nearest_depth = INFINITY;
 	Vec3 nearest_intersection;
@@ -150,9 +151,12 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 		Vec3 intersection;
 		if(planes[i].intersect(ray, intersection, depth))
 		{
-			nearest_depth = depth;
-			nearest_intersection = intersection;
-			radiance = planes[i].albedo;
+			if(depth < nearest_depth)
+			{
+				nearest_depth = depth;
+				nearest_intersection = intersection;
+				radiance = planes[i].albedo;
+			}
 		}
 	}
 	
@@ -170,9 +174,9 @@ int main(int argc, char* argv[])
 		for(uint32_t y = 0; y < height; ++y)
 		{
 			Vec3 radiance = estimateRadiance(x,y,width,height);
-			output[3*(y * width + x) + 0] = radiance.x%256;
-			output[3*(y * width + x) + 1] = radiance.y%256;
-			output[3*(y * width + x) + 2] = radiance.z%256;
+			output[3*(y * width + x) + 0] = static_cast<char>(fminf(radiance.y, 1.0f)*255); //G
+			output[3*(y * width + x) + 1] = static_cast<char>(fminf(radiance.z, 1.0f)*255); //B
+			output[3*(y * width + x) + 2] = static_cast<char>(fminf(radiance.x, 1.0f)*255); //R
 		}
 	}
 	
