@@ -213,9 +213,12 @@ int main(int argc, char* argv[])
 		for(uint32_t y = 0; y < height; ++y)
 		{
 			Vec3 radiance = estimateRadiance(x,width - y - 1,width,height);
-			output[3*(y * width + x) + 0] = static_cast<uint8_t>(fminf(radiance.x, 1.0f)*255.0f); //R
-			output[3*(y * width + x) + 1] = static_cast<uint8_t>(fminf(radiance.y, 1.0f)*255.0f); //G
-			output[3*(y * width + x) + 2] = static_cast<uint8_t>(fminf(radiance.z, 1.0f)*255.0f); //B
+			float mapped_x = powf(1.0f - expf(-radiance.x), 1.0f/2.2f);
+			float mapped_y = powf(1.0f - expf(-radiance.y), 1.0f/2.2f);
+			float mapped_z = powf(1.0f - expf(-radiance.z), 1.0f/2.2f);
+			output[3*(y * width + x) + 0] = static_cast<uint8_t>(fmaxf(0,fminf(mapped_x, 1.0f))*255.0f); //R
+			output[3*(y * width + x) + 1] = static_cast<uint8_t>(fmaxf(0,fminf(mapped_y, 1.0f))*255.0f); //G
+			output[3*(y * width + x) + 2] = static_cast<uint8_t>(fmaxf(0,fminf(mapped_z, 1.0f))*255.0f); //B
 		}
 	}
 	
