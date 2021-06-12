@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <fstream>
 
 //
 //	MATH FUNCTIONS
@@ -13,6 +14,8 @@
 struct Vec3
 {
 	float x = 0,y = 0,z = 0;
+	
+	Vec3() = default;
 	
 	Vec3(const float&x, const float& y, const float& z)
 		:x(x),y(y),z(z)
@@ -64,6 +67,22 @@ struct Vec3
 
 int main(int argc, char* argv[])
 {
+	const uint32_t width = 512, height = 512;
 	
+	char* output = new char[width*height*3];
+	
+	std::ofstream out_image;
+	out_image.open("output.ppm");
+	
+	out_image << "P6" << "\n"
+	<< width << " "
+	<< height << "\n"
+	<< 3 << "\n";
+	
+	out_image.write(output, width * height * 3);
+	
+	out_image.close();
+	
+	delete[] output;
 	return 0;
 }
