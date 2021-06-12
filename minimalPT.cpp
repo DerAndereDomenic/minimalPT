@@ -71,13 +71,23 @@ int main(int argc, char* argv[])
 	
 	char* output = new char[width*height*3];
 	
+	for(uint32_t x = 0; x < width; ++x)
+	{
+		for(uint32_t y = 0; y < height; ++y)
+		{
+			output[3*(y * width + x) + 0] = (x+y)%256;
+			output[3*(y * width + x) + 1] = (x+y)%256;
+			output[3*(y * width + x) + 2] = (x+y)%256;
+		}
+	}
+	
 	std::ofstream out_image;
 	out_image.open("output.ppm");
 	
 	out_image << "P6" << "\n"
 	<< width << " "
 	<< height << "\n"
-	<< 3 << "\n";
+	<< 255 << "\n";
 	
 	out_image.write(output, width * height * 3);
 	
