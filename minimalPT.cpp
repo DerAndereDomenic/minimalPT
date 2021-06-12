@@ -215,32 +215,68 @@ rnd()
 Vec3 inline
 sampleBSDF(Vec3& incoming_dir, Vec3& N, const MaterialType& type)
 {
-	float xi_1 = rnd();
-	float xi_2 = rnd();
+	switch(type)
+	{
+		case DIFFUSE:
+		{
+			float xi_1 = rnd();
+			float xi_2 = rnd();
+			
+			float r = sqrtf(xi_1);
+			float phi = 2.0f * PI * xi_2;
+			
+			float x = r*cos(phi);
+			float y = r*sin(phi);
+			float z = sqrtf(fmaxf(0.0f, 1.0f - x * x - y * y));
+			
+			float sz = (N.z >= 0) ? 1 : -1;
+			float a = 1.0f / (sz + N.z);
+			float ya = N.y * a;
+			float b = N.x * ya;
+			float c = N.x * sz;
+			
+			Vec3 localX(c * N.x * a - 1.0f, sz * b, c);
+			Vec3 localY(b, N.y * ya - sz, N.y);
+			
+			return localX * x + localY * y + N * z;
+		}
+		break;
+		case MIRROR:
+		{
+			return (N*incoming_dir.dot(N)*2.0f - incoming_dir).normalize();
+		}
+		break;
+		case REFLECT:
+		{
+			
+		}
+		break;
+	}
 	
-	float r = sqrtf(xi_1);
-	float phi = 2.0f * PI * xi_2;
-	
-	float x = r*cos(phi);
-	float y = r*sin(phi);
-	float z = sqrtf(fmaxf(0.0f, 1.0f - x * x - y * y));
-	
-	float sz = (N.z >= 0) ? 1 : -1;
-	float a = 1.0f / (sz + N.z);
-	float ya = N.y * a;
-	float b = N.x * ya;
-	float c = N.x * sz;
-	
-	Vec3 localX(c * N.x * a - 1.0f, sz * b, c);
-	Vec3 localY(b, N.y * ya - sz, N.y);
-	
-	return localX * x + localY * y + N * z;
 }
 
 float inline 
 BSDFprob(Vec3& direction, Vec3& normal, const MaterialType& type)
 {
-	return fmaxf(1e-5f, direction.dot(normal)/PI);
+	switch(type)
+	{
+		case DIFFUSE:
+		{
+			return fmaxf(1e-5f, direction.dot(normal)/PI);
+		}
+		break;
+		case MIRROR:
+		{
+			return 1.0f;
+		}
+		break;
+		case REFLECT:
+		{
+			
+		}
+		break;
+	}
+	
 }
 
 LocalGeometry inline 
