@@ -279,6 +279,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 int main(int argc, char* argv[])
 {
 	const uint32_t width = 512, height = 512;
+	const uint32_t n_samples = 5;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
@@ -286,7 +287,12 @@ int main(int argc, char* argv[])
 	{
 		for(uint32_t y = 0; y < height; ++y)
 		{
-			Vec3 radiance = estimateRadiance(x,width - y - 1,width,height);
+			Vec3 radiance(0,0,0);
+			for(uint32_t i = 0; i < n_samples; ++i)
+			{
+				radiance = radiance + estimateRadiance(x,width - y - 1,width,height) / n_samples;
+			}
+			
 			float mapped_x = powf(1.0f - expf(-radiance.x), 1.0f/2.2f);
 			float mapped_y = powf(1.0f - expf(-radiance.y), 1.0f/2.2f);
 			float mapped_z = powf(1.0f - expf(-radiance.z), 1.0f/2.2f);
