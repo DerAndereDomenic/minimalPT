@@ -7,6 +7,7 @@
 #define PI 3.1415926535f
 #include <cmath>
 #include <fstream>
+#include <ctime>
 
 //
 //	MATH FUNCTIONS
@@ -197,6 +198,12 @@ struct LocalGeometry
 	MaterialType type;
 };
 
+float inline 
+rnd()
+{
+	return ((float)rand())/((float)(RAND_MAX));
+}
+
 LocalGeometry inline 
 computeSceneIntersection(Ray& ray)
 {
@@ -278,6 +285,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 
 int main(int argc, char* argv[])
 {
+	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
 	const uint32_t n_samples = 5;
 	
