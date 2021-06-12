@@ -121,6 +121,46 @@ struct Plane
 	}
 };
 
+struct Sphere
+{
+	Vec3 position, albedo;
+	float radius;
+	MaterialType type;
+	
+	Sphere(const Vec3& position, const float& radius, const Vec3& albedo, const MaterialType& type)
+		:position(position), radius(radius), albedo(albedo), type(type)
+	{}
+	
+	bool inline
+	intersect(Ray& ray, Vec3& output_intersection, float& output_depth)
+	{
+		Vec3 OS = ray.origin - position;
+		float b = 2.0f * ray.direction.dot(OS);
+		float c = OS.dot(OS) - radius * radius;
+		float disc = b * b - 4 * c;
+		
+		if(disc > 0)
+		{
+			float distSqrt = sqrtf(disc);
+			float q = b < 0 ? (-b - distSqrt) / 2.0f : (-b + distSqrt) / 2.0f;
+			float t0 = q;
+			float t1 = c/q;
+			
+			t0 = fminf(t0,t1);
+			t1 = fmaxf(t0,t1);
+			
+			if(t1 >= 0)
+			{
+				float t = t0 < 0 ? t1 : t0;
+				output_intersection = ray.origin + ray.direction*t;
+				output_depth = t;
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
 //
 //	SCENE
 //
@@ -132,6 +172,13 @@ Plane planes[NUM_PLANES] =
 	Plane(Vec3(-1,0,0), Vec3(1,0,0), Vec3(0,1,0), DIFFUSE),
 	Plane(Vec3(1,0,0), Vec3(-1,0,0), Vec3(1,0,0), DIFFUSE),
 	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(1,1,1), DIFFUSE)
+};
+
+#define NUM_SPHERES 2
+Sphere spheres[NUM_SPHERES] = 
+{
+	Sphere(Vec3(-0.6f,-0.7f,2.6f), 0.3f, Vec3(1,1,1), DIFFUSE),
+	Sphere(Vec3(0.6f,-0.7f,1.7f), 0.3f, Vec3(1,1,1), DIFFUSE)
 };
 
 //Light
@@ -170,6 +217,24 @@ computeSceneIntersection(Ray& ray)
 			}
 		}
 	}
+
+	for(uint32_t i = 0; i < NUM_SPHERES; ++i)
+	{
+		float depth;
+		Vec3 intersection;
+		if(spheres[i].intersect(ray, intersection, depth))
+		{
+			if(depth < geom.depth)
+			{
+				geom.depth = depth;
+				geom.P = intersection;
+				geom.N = intersection - spheres[i].position;
+				geom.N = geom.N / geom.N.norm();
+				geom.type = spheres[i].type;
+				geom.albedo = spheres[i].albedo;
+			}
+		}
+	}
 	
 	return geom;
 }
@@ -182,7 +247,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 	ray.origin = Vec3(0,0,0);
 	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(width) - 1.0f,
 						 2.0f*static_cast<float>(y)/static_cast<float>(height) - 1.0f,
-						 1);
+						 1.5f);
 	ray.direction = ray.direction * (1.0f/ray.direction.norm());
 						 
 	//Compute intersection
