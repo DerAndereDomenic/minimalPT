@@ -21,56 +21,31 @@ struct Vec3
 	Vec3() = default;
 	
 	Vec3(const float&x, const float& y, const float& z)
-		:x(x),y(y),z(z)
-		{}
+		:x(x),y(y),z(z) {}
 	
 	Vec3 inline
-	operator+(const Vec3& other)
-	{
-		return Vec3(x + other.x, y + other.y, z + other.z);
-	}
+	operator+(const Vec3& other) { return Vec3(x + other.x, y + other.y, z + other.z); }
 	
 	Vec3 inline 
-	operator-(const Vec3& other)
-	{
-		return Vec3(x - other.x, y - other.y, z - other.z);
-	}
+	operator-(const Vec3& other) { return Vec3(x - other.x, y - other.y, z - other.z); }
 	
 	Vec3 inline 
-	operator-()
-	{
-		return Vec3(-x, -y, -z);
-	}
+	operator-() { return Vec3(-x, -y, -z); }
 	
 	Vec3 inline 
-	operator*(const Vec3& other)
-	{
-		return Vec3(x * other.x, y * other.y, z * other.z);
-	}
+	operator*(const Vec3& other) { return Vec3(x * other.x, y * other.y, z * other.z); }
 	
 	Vec3 inline
-	operator*(const float& l)
-	{
-		return Vec3(x*l, y*l, z*l);
-	}
+	operator*(const float& l) { return Vec3(x*l, y*l, z*l); }
 	
 	Vec3 inline
-	operator/(const float& l)
-	{
-		return Vec3(x/l, y/l, z/l);
-	}
+	operator/(const float& l) { return Vec3(x/l, y/l, z/l); }
 	
 	float inline
-	norm()
-	{
-		return sqrtf(x*x + y*y + z*z);
-	}
+	norm() { return sqrtf(x*x + y*y + z*z); }
 	
 	float inline
-	dot(const Vec3& other)
-	{
-		return x * other.x + y * other.y + z * other.z;
-	}
+	dot(const Vec3& other) { return x * other.x + y * other.y + z * other.z; }
 	
 	Vec3 inline
 	normalize()
@@ -91,8 +66,7 @@ struct Ray
 	
 	Ray() = default;
 	Ray(const Vec3& origin, const Vec3& direction)
-		:origin(origin), direction(direction)
-	{}
+		:origin(origin), direction(direction) {}
 };
 
 enum MaterialType
@@ -108,8 +82,7 @@ struct Plane
 	MaterialType type;
 	
 	Plane(const Vec3& position, const Vec3& normal, const Vec3& albedo, const MaterialType& type)
-		:position(position), normal(normal), albedo(albedo), type(type)
-	{}
+		:position(position), normal(normal), albedo(albedo), type(type) {}
 	
 	bool inline
 	intersect(Ray& ray, Vec3& output_intersection, float& output_depth)
@@ -117,15 +90,12 @@ struct Plane
 		float PdotN = position.dot(normal);
 		float OdotN = ray.origin.dot(normal);
 		float DdotN = ray.direction.dot(normal);
-		
 		if(fabs(DdotN) < 1e-5f) return false;
 		
 		float t = (PdotN - OdotN) / DdotN;
-		if(t < 0)return false;
-		
+		if(t < 0)return false;	
 		output_intersection = ray.origin + ray.direction*t;
-		output_depth = t;
-		
+		output_depth = t;	
 		return true;
 	}
 };
@@ -137,8 +107,7 @@ struct Sphere
 	MaterialType type;
 	
 	Sphere(const Vec3& position, const float& radius, const Vec3& albedo, const MaterialType& type)
-		:position(position), radius(radius), albedo(albedo), type(type)
-	{}
+		:position(position), radius(radius), albedo(albedo), type(type) {}
 	
 	bool inline
 	intersect(Ray& ray, Vec3& output_intersection, float& output_depth)
@@ -153,11 +122,9 @@ struct Sphere
 			float distSqrt = sqrtf(disc);
 			float q = b < 0 ? (-b - distSqrt) / 2.0f : (-b + distSqrt) / 2.0f;
 			float t0 = q;
-			float t1 = c/q;
-			
+			float t1 = c/q;		
 			t0 = fminf(t0,t1);
-			t1 = fmaxf(t0,t1);
-			
+			t1 = fmaxf(t0,t1);		
 			if(t1 >= 0)
 			{
 				float t = t0 < 0 ? t1 : t0;
@@ -209,10 +176,7 @@ struct LocalGeometry
 };
 
 float inline 
-rnd()
-{
-	return ((float)rand())/((float)(RAND_MAX));
-}
+rnd() { return ((float)rand())/((float)(RAND_MAX)); }
 
 Vec3 inline
 sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
@@ -243,11 +207,7 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 			return localX * x + localY * y + N * z;
 		}
 		break;
-		case MIRROR:
-		{
-			return (N*inc_dir.dot(N)*2.0f - inc_dir).normalize();
-		}
-		break;
+		case MIRROR: return (N*inc_dir.dot(N)*2.0f - inc_dir).normalize();
 		case GLASS:
 		{
 			float NdotV = inc_dir.dot(N);
@@ -261,18 +221,12 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 			Vec3 refraction_dir;
 			float k = 1.0f - eta*eta*(1.0f - NdotV*NdotV);
 			if(k < 0) //Total internal Reflection
-			{
 				return Vec3(0,0,0);
-			}
 			else
-			{
 				refraction_dir = -inc_dir*eta - normal*(-eta * inc_dir.dot(normal) + sqrtf(k));
-			}
 			
-			if(xi <= p_reflect)
-			{
-				return (normal*inc_dir.dot(normal)*2.0f - inc_dir);
-			}
+			if(xi <= p_reflect) return (normal*inc_dir.dot(normal)*2.0f - inc_dir);
+			
 			return refraction_dir;
 		}
 		break;
@@ -280,28 +234,11 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 	
 }
 
+// Only diffuse
 float inline 
 BSDFprob(Vec3& direction, Vec3& normal, const MaterialType& type)
 {
-	switch(type)
-	{
-		case DIFFUSE:
-		{
-			return fmaxf(1e-5f, direction.dot(normal)/PI);
-		}
-		break;
-		case MIRROR:
-		{
-			return 1.0f;
-		}
-		break;
-		case GLASS:
-		{
-			return 1.0f;
-		}
-		break;
-	}
-	
+	return fmaxf(1e-5f, direction.dot(normal)/PI);
 }
 
 LocalGeometry inline 
@@ -341,7 +278,6 @@ computeSceneIntersection(Ray& ray)
 			}
 		}
 	}
-	
 	return geom;
 }
 
@@ -349,7 +285,6 @@ Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
 	Ray ray;
-	
 	ray.origin = Vec3(0,0,0);
 	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(width) - 1.0f,
 						 2.0f*static_cast<float>(y)/static_cast<float>(height) - 1.0f,
@@ -358,8 +293,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 						 
 	Vec3 radiance(0,0,0);
 	Vec3 ray_weight(1,1,1);
-	uint32_t trace_depth = 0;
-	
+	uint32_t trace_depth = 0;	
 	do
 	{
 		LocalGeometry geom = computeSceneIntersection(ray);
@@ -378,9 +312,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			shadow_ray.direction = light_direction;
 			
 			LocalGeometry shadow_geom = computeSceneIntersection(shadow_ray);
-			float visibility = 1.0f;
-			if(shadow_geom.depth < light_dist - 0.01f)
-				visibility = 0.0f;
+			float visibility = shadow_geom.depth < light_dist - 0.01f ? 0.0f : 1.0f;
 			
 			if(geom.type == DIFFUSE)
 				radiance = radiance + ray_weight * geom.albedo/PI * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
@@ -388,20 +320,15 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			//Indirect illumination
 			Vec3 sample_direction = sampleBSDF(inc_dir, geom.N, geom.type).normalize();
 			if(sample_direction.norm() == 0)break;
-			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
 			//This only allows for mirror / glass that reflects every wavelength without absorption
 			if(geom.type == DIFFUSE)
-				ray_weight = ray_weight * geom.albedo/PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
+				ray_weight = ray_weight * geom.albedo/PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / BSDFprob(sample_direction, geom.N, geom.type);
 			
 			ray.origin = geom.P + sample_direction * 0.01f;
 			ray.direction = sample_direction;
 		}
-		else
-		{
-			break;
-		}
-		
+		else break;		
 		++trace_depth;
 	}while(trace_depth < MAX_TRACE_DEPTH);
 	
@@ -422,8 +349,7 @@ int main(int argc, char* argv[])
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
-	uint32_t done = 0;
-	uint32_t total = width * height * n_samples;
+	uint32_t done = 0, total = width * height * n_samples;
 	
 	for(uint32_t x = 0; x < width; ++x)
 	{
@@ -434,8 +360,7 @@ int main(int argc, char* argv[])
 			{
 				radiance = radiance + estimateRadiance(x,width - y - 1,width,height) / n_samples;
 				++done;
-			}
-			
+			}		
 			printf("\rProgress: %f %%", 100.0f * static_cast<float>(done)/static_cast<float>(total));
 			fflush(stdout);
 			
@@ -457,7 +382,6 @@ int main(int argc, char* argv[])
 	<< 255 << "\n";
 	
 	out_image.write((char*)output, width * height * 3);
-	
 	out_image.close();
 	
 	printf("\n");
