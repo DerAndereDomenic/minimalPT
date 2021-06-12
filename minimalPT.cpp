@@ -204,7 +204,8 @@ rnd()
 	return ((float)rand())/((float)(RAND_MAX));
 }
 
-Vec3 sampleBSDF(Vec3& N)
+Vec3 inline
+sampleBSDF(Vec3& N)
 {
 	float xi_1 = rnd();
 	float xi_2 = rnd();
@@ -226,6 +227,12 @@ Vec3 sampleBSDF(Vec3& N)
 	Vec3 localY(b, N.y * ya - sz, N.y);
 	
 	return localX * x + localY * y + N * z;
+}
+
+float inline 
+BSDFprob(Vec3& direction, Vec3& normal)
+{
+	return fmaxf(1e-5f, direction.dot(normal)/PI);
 }
 
 LocalGeometry inline 
