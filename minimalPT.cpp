@@ -173,6 +173,7 @@ struct Sphere
 //
 //	SCENE
 //
+
 #define NUM_PLANES 5
 Plane planes[NUM_PLANES] = 
 {
@@ -197,6 +198,7 @@ Vec3 light_intensity(1,1,1);
 //
 //	RENDERING
 //
+
 struct LocalGeometry
 {
 	Vec3 P;
@@ -248,7 +250,24 @@ sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 		break;
 		case REFLECT:
 		{
-			
+			float NdotV = inc_dir.dot(N);
+			bool outside = NdotV > 0.0f;
+			float eta = outside ? 1.0f/1.5f : 1.5f;
+			Vec3 normal = outside ? N : -N;
+			float F0 = outside ? (1.0f - eta) / (1.0f + eta) : (-1.0f + eta) / (1.0f + eta);
+			F0 *= F0;
+			float p_reflect = F0 + (1.0f - F0) * powf(1.0f - NdotV, 5.0f);
+			float xi = rnd();
+			Vec3 refraction_dir;
+			float k = 1.0f - eta*eta*(1.0f - NdotV*NdotV);
+			if(k < 0) //Total internal reflection
+			{
+				return Vec3(0,0,0);
+			}
+			else
+			{
+				return -(inc_dir - normal*(-eta * NdotV + sqrtf(k)))*eta;
+			}
 		}
 		break;
 	}
