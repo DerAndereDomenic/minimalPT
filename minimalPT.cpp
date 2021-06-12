@@ -261,7 +261,16 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 		Vec3 light_radiance = light_intensity / (light_dist * light_dist);
 		light_direction = light_direction / light_dist;
 		
-		radiance = geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction));
+		Ray shadow_ray;
+		shadow_ray.origin = geom.P + light_direction*0.01f;
+		shadow_ray.direction = light_direction;
+		
+		LocalGeometry shadow_geom = computeSceneIntersection(shadow_ray);
+		float visibility = 1.0f;
+		if(shadow_geom.depth < light_dist - 0.01f)
+			visibility = 0.0f;
+		
+		radiance = geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 	}
 	
 	return radiance;
