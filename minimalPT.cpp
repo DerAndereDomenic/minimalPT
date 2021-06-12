@@ -4,6 +4,7 @@
 //		g++ -o minimalPT minimalPT.cpp
 
 #include <iostream>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <fstream>
 
@@ -127,9 +128,46 @@ Plane planes[NUM_PLANES] =
 	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(1,1,1), DIFFUSE)
 };
 
+//Light
+Vec3 light_position(0,0.9f,2.0f);
+Vec3 light_intensity(1,1,1);
+
 //
 //	RENDERING
 //
+struct LocalGeometry
+{
+	Vec3 P;
+	Vec3 N;
+	Vec3 albedo;
+	float depth = INFINITY;
+	MaterialType type;
+};
+
+LocalGeometry inline 
+computeSceneIntersection(Ray& ray)
+{
+	LocalGeometry geom;
+	for(uint32_t i = 0; i < NUM_PLANES; ++i)
+	{
+		float depth;
+		Vec3 intersection;
+		if(planes[i].intersect(ray, intersection, depth))
+		{
+			if(depth < geom.depth)
+			{
+				geom.depth = depth;
+				geom.P = intersection;
+				geom.N = planes[i].normal;
+				geom.type = planes[i].type;
+				geom.albedo = planes[i].albedo;
+			}
+		}
+	}
+	
+	return geom;
+}
+
 Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
@@ -142,25 +180,10 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 						 1);
 	ray.direction = ray.direction * (1.0f/ray.direction.norm());
 						 
-	float nearest_depth = INFINITY;
-	Vec3 nearest_intersection;
+	//Compute intersection
+	LocalGeometry geom = computeSceneIntersection(ray);
 	
-	for(uint32_t i = 0; i < NUM_PLANES; ++i)
-	{
-		float depth;
-		Vec3 intersection;
-		if(planes[i].intersect(ray, intersection, depth))
-		{
-			if(depth < nearest_depth)
-			{
-				nearest_depth = depth;
-				nearest_intersection = intersection;
-				radiance = planes[i].albedo;
-			}
-		}
-	}
-	
-	return radiance;
+	return geom.albedo;
 }
 
 int main(int argc, char* argv[])
