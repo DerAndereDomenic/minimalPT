@@ -66,7 +66,7 @@ struct Vec3
 };
 
 //
-//	SCENE
+//	GEOMETRY
 //
 
 struct Ray
@@ -112,6 +112,18 @@ struct Plane
 		
 		return true;
 	}
+};
+
+//
+//	SCENE
+//
+Plane planes[5] = 
+{
+	Plane(Vec3(0,-1,0), Vec3(0,1,0), Vec3(1,1,1), DIFFUSE),
+	Plane(Vec3(0,1,0), Vec3(0,-1,0), Vec3(1,1,1), DIFFUSE),
+	Plane(Vec3(-1,0,0), Vec3(1,0,0), Vec3(0,1,0), DIFFUSE),
+	Plane(Vec3(1,0,0), Vec3(1,0,0), Vec3(1,0,0), DIFFUSE),
+	Plane(Vec3(0,0,3), Vec3(0,0,-1), Vec3(1,1,1), DIFFUSE)
 };
 
 //
