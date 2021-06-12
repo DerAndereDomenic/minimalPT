@@ -72,6 +72,13 @@ struct Vec3
 		return x * other.x + y * other.y + z * other.z;
 	}
 	
+	Vec3 inline
+	normalize()
+	{
+		float n = norm();
+		return Vec3(x / n, y / n, z / n);
+	}
+	
 };
 
 //
@@ -267,8 +274,7 @@ computeSceneIntersection(Ray& ray)
 			{
 				geom.depth = depth;
 				geom.P = intersection;
-				geom.N = intersection - spheres[i].position;
-				geom.N = geom.N / geom.N.norm();
+				geom.N = (intersection - spheres[i].position).normalize();
 				geom.type = spheres[i].type;
 				geom.albedo = spheres[i].albedo;
 			}
@@ -287,7 +293,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(width) - 1.0f,
 						 2.0f*static_cast<float>(y)/static_cast<float>(height) - 1.0f,
 						 1.5f);
-	ray.direction = ray.direction * (1.0f/ray.direction.norm());
+	ray.direction = ray.direction.normalize();
 						 
 	Vec3 radiance(0,0,0);
 	Vec3 ray_weight(1,1,1);
@@ -317,8 +323,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			radiance = radiance + ray_weight * geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 			
 			//Indirect illumination
-			Vec3 sample_direction = sampleBSDF(geom.N);
-			sample_direction = sample_direction/sample_direction.norm();
+			Vec3 sample_direction = sampleBSDF(geom.N).normalize();
 			float p = BSDFprob(sample_direction, geom.N);
 			
 			ray_weight = ray_weight * geom.albedo / PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
@@ -341,7 +346,7 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 128;
+	const uint32_t n_samples = 32;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
