@@ -213,7 +213,7 @@ rnd()
 }
 
 Vec3 inline
-sampleBSDF(Vec3& incoming_dir, Vec3& N, const MaterialType& type)
+sampleBSDF(Vec3& inc_dir, Vec3& N, const MaterialType& type)
 {
 	switch(type)
 	{
@@ -243,7 +243,7 @@ sampleBSDF(Vec3& incoming_dir, Vec3& N, const MaterialType& type)
 		break;
 		case MIRROR:
 		{
-			return (N*incoming_dir.dot(N)*2.0f - incoming_dir).normalize();
+			return (N*inc_dir.dot(N)*2.0f - inc_dir).normalize();
 		}
 		break;
 		case REFLECT:
@@ -277,6 +277,17 @@ BSDFprob(Vec3& direction, Vec3& normal, const MaterialType& type)
 		break;
 	}
 	
+}
+
+Vec3
+brdf(Vec3& inc_dir, LocalGeometry& geom)
+{
+	switch(geom.type)
+	{
+		case DIFFUSE: return geom.albedo/PI;
+		case MIRROR: return Vec3(1,1,1)/inc_dir.dot(geom.N);
+		case REFLECT: return Vec3(1,1,1);
+	}
 }
 
 LocalGeometry inline 
@@ -321,17 +332,6 @@ computeSceneIntersection(Ray& ray)
 }
 
 Vec3
-brdf(LocalGeometry& geom)
-{
-	switch(geom.type)
-	{
-		case DIFFUSE: return geom.albedo/PI;
-		case MIRROR: return Vec3(1,1,1);
-		case REFLECT: return Vec3(1,1,1);
-	}
-}
-
-Vec3
 estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, const uint32_t& height)
 {
 	Ray ray;
@@ -349,6 +349,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 	do
 	{
 		LocalGeometry geom = computeSceneIntersection(ray);
+		Vec3 inc_dir = -ray.direction;
 		
 		if(geom.depth != INFINITY)
 		{
@@ -368,13 +369,13 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 				visibility = 0.0f;
 			
 			if(geom.type == DIFFUSE)
-				radiance = radiance + ray_weight * brdf(geom) * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
+				radiance = radiance + ray_weight * brdf(inc_dir, geom) * light_radiance * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
 			
 			//Indirect illumination
-			Vec3 sample_direction = sampleBSDF(ray.direction, geom.N, geom.type).normalize();
+			Vec3 sample_direction = sampleBSDF(inc_dir, geom.N, geom.type).normalize();
 			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
-			ray_weight = ray_weight * brdf(geom) * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
+			ray_weight = ray_weight * brdf(inc_dir, geom) * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
 			
 			ray.origin = geom.P + sample_direction * 0.01f;
 			ray.direction = sample_direction;
