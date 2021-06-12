@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <ctime>
+#define MAX_TRACE_DEPTH 5
 
 //
 //	MATH FUNCTIONS
@@ -288,28 +289,50 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 						 1.5f);
 	ray.direction = ray.direction * (1.0f/ray.direction.norm());
 						 
-	//Compute intersection
-	LocalGeometry geom = computeSceneIntersection(ray);
-	
 	Vec3 radiance(0,0,0);
-	if(geom.depth != INFINITY)
+	Vec3 ray_weight(1,1,1);
+	uint32_t trace_depth = 0;
+	
+	do
 	{
-		Vec3 light_direction = light_position - geom.P;
-		float light_dist = light_direction.norm();
-		Vec3 light_radiance = light_intensity / (light_dist * light_dist);
-		light_direction = light_direction / light_dist;
+		LocalGeometry geom = computeSceneIntersection(ray);
 		
-		Ray shadow_ray;
-		shadow_ray.origin = geom.P + light_direction*0.01f;
-		shadow_ray.direction = light_direction;
+		if(geom.depth != INFINITY)
+		{
+			//Direct Illumination
+			Vec3 light_direction = light_position - geom.P;
+			float light_dist = light_direction.norm();
+			Vec3 light_radiance = light_intensity / (light_dist * light_dist);
+			light_direction = light_direction / light_dist;
+			
+			Ray shadow_ray;
+			shadow_ray.origin = geom.P + light_direction*0.01f;
+			shadow_ray.direction = light_direction;
+			
+			LocalGeometry shadow_geom = computeSceneIntersection(shadow_ray);
+			float visibility = 1.0f;
+			if(shadow_geom.depth < light_dist - 0.01f)
+				visibility = 0.0f;
+			
+			radiance = radiance + ray_weight * geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
+			
+			//Indirect illumination
+			Vec3 sample_direction = sampleBSDF(geom.N);
+			sample_direction = sample_direction/sample_direction.norm();
+			float p = BSDFprob(sample_direction, geom.N);
+			
+			ray_weight = ray_weight * geom.albedo / PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
+			
+			ray.origin = geom.P + sample_direction * 0.01f;
+			ray.direction = sample_direction;
+		}
+		else
+		{
+			break;
+		}
 		
-		LocalGeometry shadow_geom = computeSceneIntersection(shadow_ray);
-		float visibility = 1.0f;
-		if(shadow_geom.depth < light_dist - 0.01f)
-			visibility = 0.0f;
-		
-		radiance = geom.albedo * light_radiance / PI * fmaxf(0.0f, geom.N.dot(light_direction)) * visibility;
-	}
+		++trace_depth;
+	}while(trace_depth < MAX_TRACE_DEPTH);
 	
 	return radiance;
 }
@@ -318,7 +341,7 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 1;
+	const uint32_t n_samples = 64;
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
