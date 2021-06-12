@@ -390,6 +390,7 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 			if(sample_direction.norm() == 0)break;
 			float p = BSDFprob(sample_direction, geom.N, geom.type);
 			
+			//This only allows for mirror / glass that reflects every wavelength without absorption
 			if(geom.type == DIFFUSE)
 				ray_weight = ray_weight * geom.albedo/PI * fmaxf(0.0f, geom.N.dot(sample_direction)) / p;
 			
@@ -409,9 +410,15 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 
 int main(int argc, char* argv[])
 {
+	if(argc != 2)
+	{
+		std::cerr << "Usage: ./minimalPT [number_of_samples]" << std::endl;
+		return -1;
+	}
+	
 	srand((unsigned int)time(NULL));
 	const uint32_t width = 512, height = 512;
-	const uint32_t n_samples = 10;
+	const uint32_t n_samples = std::stoi(argv[1]);
 	
 	uint8_t* output = new uint8_t[width*height*3];
 	
