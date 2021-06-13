@@ -286,8 +286,8 @@ estimateRadiance(const uint32_t& x, const uint32_t& y, const uint32_t& width, co
 {
 	Ray ray;
 	ray.origin = Vec3(0,0,0);
-	ray.direction = Vec3(2.0f*static_cast<float>(x)/static_cast<float>(width) - 1.0f,
-						 2.0f*static_cast<float>(y)/static_cast<float>(height) - 1.0f,
+	ray.direction = Vec3(2.0f*(static_cast<float>(x)+rnd())/static_cast<float>(width) - 1.0f,
+						 2.0f*(static_cast<float>(y)+rnd())/static_cast<float>(height) - 1.0f,
 						 1.5f);
 	ray.direction = ray.direction.normalize();
 						 
