@@ -1,7 +1,9 @@
 // Author: Domenic Zingsheim
 // Date: 12.06.2021
 // Build:
-//		g++ -o minimalPT minimalPT.cpp
+//		g++ -o minimalPT minimalPT.cpp -O3
+// Run:
+// 		./minimalPT [number_of_samples]
 
 #include <iostream>
 #define PI 3.1415926535f
