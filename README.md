@@ -8,5 +8,5 @@ Then run it using
 ```
 ./minimalPT [number_of_samples]
 ```
-Example output with 8192 samples per pixel:
+Example output with 8192 samples per pixel:<br>
 <img title="Sample render" alt="Sample render" src="output_8192spp.png">
